@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 const languages = [
   { code: 'en', name: 'English', icon: 'circle-flags:us' },
   { code: 'es', name: 'Español', icon: 'circle-flags:es' },
+  { code: 'ru', name: 'Русский', icon: 'circle-flags:ru' },
 ];
 
 export function LanguageSwitcher() {
@@ -21,7 +22,7 @@ export function LanguageSwitcher() {
 
   const currentLanguage = languages.find(lang => lang.code === locale) || languages[0];
 
-  const handleLanguageChange = (newLocale: 'en' | 'es') => {
+  const handleLanguageChange = (newLocale: 'en' | 'es' | 'ru') => {
     if (newLocale === locale) return;
 
     startTransition(() => {
@@ -59,7 +60,7 @@ export function LanguageSwitcher() {
           {languages.map((lang) => (
             <DropdownMenu.Item
               key={lang.code}
-              onSelect={() => handleLanguageChange(lang.code as 'en' | 'es')}
+              onSelect={() => handleLanguageChange(lang.code as 'en' | 'es' | 'ru')}
               className={`flex items-center gap-3 px-3 py-2 text-sm squircle-element cursor-pointer outline-none transition-colors ${locale === lang.code ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
                 }`}
               aria-current={locale === lang.code ? 'true' : undefined}
