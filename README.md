@@ -22,7 +22,7 @@
   </video>
 </div>
 
-<img width="1890" height="1187" alt="Frame 1116606714 (2) (1)" src="https://github.com/user-attachments/assets/863a026e-ffef-48c5-8114-4c1ff170deb4" />
+<img width="1890" height="1318" alt="Frame 1116606714 (1)" src="https://github.com/user-attachments/assets/29a8418d-f66f-4d60-958d-4694497c43d7" />
 
 ## Features
 
