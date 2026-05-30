@@ -61,8 +61,11 @@ async function openDB(): Promise<IDBDatabase> {
 }
 
 
-function calculateAspectRatio(_width: number, _height: number): string {
-    return "auto";
+function calculateAspectRatio(width: number, height: number): string {
+    if (!width || !height) return "auto";
+    const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+    const divisor = gcd(width, height);
+    return `${width / divisor}/${height / divisor}`;
 }
 
 async function getVideoMetadata(file: File): Promise<{
