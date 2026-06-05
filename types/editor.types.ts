@@ -2,7 +2,7 @@ import type { ZoomFragment } from "./zoom.types";
 import type { CanvasElement } from "./canvas-elements.types";
 import type { CursorConfig, CursorRecordingData } from "./cursor.types";
 
-export type Tool = "screenshot" | "elements" | "audio" | "zoom" | "mockup" | "cursor" | "videos" | "camera" | "history";
+export type Tool = "screenshot" | "elements" | "audio" | "zoom" | "mockup" | "cursor" | "videos" | "camera" | "history" | "motion";
 
 export type BackgroundTab = "wallpaper" | "image" | "color";
 
@@ -58,6 +58,7 @@ export interface VideoThumbnail {
 export type MediaType = "video" | "image";
 
 export interface VideoCanvasProps {
+    activeTool?: string;
     mediaType?: MediaType;
     imageUrl?: string | null;
     imageRef?: React.RefObject<HTMLImageElement | null>;
@@ -120,4 +121,5 @@ export interface VideoCanvasProps {
     textToolActive?: boolean;
     onTextToolDeactivate?: () => void;
     onAddElement?: (element: CanvasElement) => void;
+    isPlaying?: boolean;
 }

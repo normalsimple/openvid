@@ -11,6 +11,22 @@ export interface Preview3DConfig {
   perspective?: number;
 }
 
+export interface PhoneRotationOffset {
+  rx: number;
+  ry: number;
+}
+
+export const PREVIEW_TO_PHONE_OFFSET: Record<string, PhoneRotationOffset> = {
+  "front":              { rx: 0,    ry: 0    },
+  "top-left-angle":     { rx: 15,   ry: -25  },
+  "top-right-angle":    { rx: 15,   ry: 22   },
+  "bottom-left-angle":  { rx: -15,  ry: -25  },
+  "bottom-right-angle": { rx: -15,  ry: 22   },
+  "isometric":          { rx: 25,   ry: 45   },
+  "tilt-up":            { rx: 15,   ry: 0    },
+  "tilt-down":          { rx: -15,  ry: 0    },
+};
+
 export const PREVIEW_CONFIGS: readonly Preview3DConfig[] = Object.freeze([
   Object.freeze({ id: "front", label: "Front", rotateX: 0, rotateY: 0, rotateZ: 0, translateY: 0, scale: 0.9, perspective: 600 }),
   Object.freeze({ id: "top-left-angle", label: "Top Left Angle", rotateX: 18, rotateY: 25, rotateZ: -15, translateY: -10, scale: 0.95, perspective: 500 }),

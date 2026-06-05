@@ -88,4 +88,6 @@ export interface ControlPanelProps {
     onAddImageToCanvas?: (projectId: string) => void;
     onDeleteImageProject?: (projectId: string) => void;
     onUploadImageToHistory?: (file: File) => void;
+    /** Which editor mode — determines which motion menu to show */
+    mediaType?: "video" | "image";
 }
