@@ -1,12 +1,7 @@
 "use client";
 
 import { Canvas, useThree } from "@react-three/fiber";
-import {
-    PerspectiveCamera,
-    useGLTF,
-    Environment,
-    OrbitControls,
-} from "@react-three/drei";
+import { PerspectiveCamera, useGLTF, Environment, OrbitControls } from "@react-three/drei";
 import { useEffect, useRef, useState, Suspense } from "react";
 import * as THREE from "three";
 import {
@@ -15,6 +10,10 @@ import {
     parseShadowColor,
     type ImageMaskConfigLike,
 } from "@/lib/phone3d.utils";
+import type { OrbitControls as OrbitControlsType } from 'three-stdlib';
+
+import { ControlsPopup } from "@/components/ui/ControlsPopup";
+import { EnvironmentPreset, ViewerControls3D } from "@/lib/viewer-controls3d";
 
 export interface IPhone13ProMax3DApi {
     renderAt: (width: number, height: number) => void;
@@ -36,13 +35,11 @@ interface Props {
     shadowColor?: string;
 }
 
-// ─── Textura de pantalla ─────────────────────────────────────────────────────
 const TEX_W = 1284 * 2;
 const TEX_H = 2778 * 2;
 
 useGLTF.preload("/models/apple_iphone_13_pro_max.glb");
 
-// ─── Tipos del GLB ──────────────────────────────────────────────────────────
 interface GLTFNodes {
     Frame_Frame_0: THREE.Mesh;
     Frame_Frame2_0: THREE.Mesh;
@@ -98,7 +95,6 @@ interface GLTFMaterials {
     "Material.002": THREE.Material;
 }
 
-// ─── Escena 3D ──────────────────────────────────────────────────────────────
 function ModelScene({
     imageUrl,
     imageMaskConfig,
@@ -126,29 +122,32 @@ function ModelScene({
     onApi?: (api: IPhone13ProMax3DApi | null) => void;
     onLoaded?: () => void;
 }) {
-    const { gl } = useThree(); // Usamos useThree para obtener el contexto de WebGL y sus capabilities
+    const { gl } = useThree();
     const gltf = useGLTF("/models/apple_iphone_13_pro_max.glb") as unknown as {
         nodes: GLTFNodes;
         materials: GLTFMaterials;
     };
     const { nodes, materials } = gltf;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const orbitRef = useRef<any>(null);
+    const orbitRef = useRef<OrbitControlsType | null>(null);
     const lastLoadedImageUrlRef = useRef<string | null>(null);
     const lastLoadedMaskKeyRef = useRef<string | null>(null);
     const lastLoadedCropKeyRef = useRef<string | null>(null);
     const wallpaperMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
 
+    const { autoRotate, rotationSpeed, glow, environment } = ViewerControls3D();
+
     useEffect(() => {
         const api: IPhone13ProMax3DApi = {
-            renderAt: (w, h) => { void w; void h; },
+            renderAt: (w, h) => {
+                void w;
+                void h;
+            },
         };
         onApi?.(api);
         return () => onApi?.(null);
     }, [onApi]);
 
-    // Notificar que el modelo base cargó (independiente de la imagen)
     useEffect(() => {
         onLoaded?.();
     }, [onLoaded]);
@@ -167,7 +166,11 @@ function ModelScene({
         const cropKey = cropArea ? JSON.stringify(cropArea) : null;
 
         if (!imageUrl) {
-            if (mat.map) { mat.map.dispose(); mat.map = null; mat.needsUpdate = true; }
+            if (mat.map) {
+                mat.map.dispose();
+                mat.map = null;
+                mat.needsUpdate = true;
+            }
             lastLoadedImageUrlRef.current = null;
             lastLoadedMaskKeyRef.current = null;
             lastLoadedCropKeyRef.current = null;
@@ -178,15 +181,19 @@ function ModelScene({
             lastLoadedImageUrlRef.current === imageUrl &&
             lastLoadedMaskKeyRef.current === maskKey &&
             lastLoadedCropKeyRef.current === cropKey
-        ) return;
+        )
+            return;
 
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => {
-            // Se aplica el recorte a la imagen si cropArea está presente
             const sourceImage = cropArea ? applyCropToImage(img, cropArea) : img;
             const cover = createCoverScreenCanvas(sourceImage, TEX_W, TEX_H, 0, imageMaskConfig);
-            if (mat.map) { mat.map.dispose(); mat.map = null; }
+
+            if (mat.map) {
+                mat.map.dispose();
+                mat.map = null;
+            }
 
             const tex = new THREE.CanvasTexture(cover);
             tex.flipY = true;
@@ -196,10 +203,7 @@ function ModelScene({
             tex.magFilter = THREE.LinearFilter;
             tex.wrapS = THREE.ClampToEdgeWrapping;
             tex.wrapT = THREE.ClampToEdgeWrapping;
-
-            // EL SECRETO PARA LOS ÁNGULOS: Filtro Anisotrópico al máximo
             tex.anisotropy = gl.capabilities.getMaxAnisotropy();
-
             mat.map = tex;
             mat.needsUpdate = true;
 
@@ -233,21 +237,21 @@ function ModelScene({
 
     return (
         <>
-            <PerspectiveCamera
-                ref={cameraRef}
-                makeDefault
-                fov={40}
-                near={0.01}
-                far={100}
-                position={[0, 0, 1.5 / zoom]}
+            <PerspectiveCamera ref={cameraRef} makeDefault fov={40} near={0.01} far={100} position={[0, 0, 1.5 / zoom]} />
+            
+            <Environment 
+                preset={environment as EnvironmentPreset} 
+                environmentIntensity={glow} 
             />
-
+            
             <OrbitControls
                 ref={orbitRef}
                 enableZoom={false}
                 enablePan={false}
                 enableDamping
                 dampingFactor={0.08}
+                autoRotate={autoRotate}
+                autoRotateSpeed={rotationSpeed}
                 onEnd={() => {
                     const orbit = orbitRef.current;
                     if (!orbit || !onRotationChange) return;
@@ -256,13 +260,12 @@ function ModelScene({
                     onRotationChange(rx, ry);
                 }}
             />
-
-            <Environment preset="studio" background={false} />
+            
             <ambientLight intensity={0.3} />
             <directionalLight position={[3, 6, 5]} intensity={0.6} />
             <directionalLight position={[-4, -2, 3]} intensity={0.25} color="#c8d8ff" />
             <directionalLight position={[0, -5, 5]} intensity={0.35} />
-
+            
             <group ref={rootRef} rotation={[0, Math.PI, 0]} scale={0.01} dispose={null}>
                 <group scale={100}>
                     <mesh castShadow receiveShadow geometry={nodes.Frame_Frame_0.geometry} material={materials.Frame} />
@@ -300,7 +303,6 @@ function ModelScene({
     );
 }
 
-// ─── CanvasWithLoader ────────────────────────────────────────────────────────
 function CanvasWithLoader({
     imageUrl,
     imageMaskConfig,
@@ -329,7 +331,6 @@ function CanvasWithLoader({
     onMount?: (canvas: HTMLCanvasElement) => void;
 }) {
     const [loaded, setLoaded] = useState(false);
-
     return (
         <>
             <Canvas
@@ -350,7 +351,6 @@ function CanvasWithLoader({
                     onMount?.(gl.domElement);
                 }}
             >
-                {/* Suspense es OBLIGATORIO cuando se usa useGLTF para evitar crashes */}
                 <Suspense fallback={null}>
                     <ModelScene
                         imageUrl={imageUrl}
@@ -368,7 +368,6 @@ function CanvasWithLoader({
                     />
                 </Suspense>
             </Canvas>
-
             {!loaded && (
                 <div
                     className="absolute inset-0 flex items-center justify-center pointer-events-none"
@@ -381,7 +380,6 @@ function CanvasWithLoader({
     );
 }
 
-// ─── Componente público ──────────────────────────────────────────────────────
 export function IPhone13ProMax3DViewer({
     imageUrl = null,
     imageMaskConfig = null,
@@ -409,71 +407,77 @@ export function IPhone13ProMax3DViewer({
     const shadowRgba = shadowColor.startsWith("#")
         ? parseShadowColor(shadowColor, computedOpacity)
         : shadowColor;
+
     const hasShadow = t > 0.01;
 
     return (
-        <div
-            style={{
-                display: "inline-block",
-                transformOrigin: "top center",
-                width: 480,
-                height: 1000 + (hasShadow ? computedBlur * 0.8 : 0),
-                marginTop: "200px",
-                marginLeft: "170px"
-            }}
-        >
-            <div style={{ position: "relative", width: 480, height: 1000 }}>
-                {hasShadow && (
+        <>
+            {/* 3. Renderizamos el panel extraído exactamente igual que en el otro componente */}
+            <ControlsPopup />
+
+            <div
+                style={{
+                    display: "inline-block",
+                    transformOrigin: "top center",
+                    width: 480,
+                    height: 1000 + (hasShadow ? computedBlur * 0.8 : 0),
+                    marginTop: "200px",
+                    marginLeft: "170px"
+                }}
+            >
+                <div style={{ position: "relative", width: 480, height: 1000 }}>
+                    {hasShadow && (
+                        <div
+                            aria-hidden
+                            style={{
+                                position: "absolute",
+                                bottom: -(computedBlur * 0.5),
+                                left: `${20 + tEased * 5}%`,
+                                width: `${60 - tEased * 10}%`,
+                                height: Math.max(4, computedBlur * 0.55),
+                                borderRadius: "50%",
+                                background: shadowRgba,
+                                filter: `blur(${Math.max(2, computedBlur * 0.6)}px)`,
+                                zIndex: 0,
+                                pointerEvents: "none",
+                            }}
+                        />
+                    )}
+
                     <div
-                        aria-hidden
                         style={{
                             position: "absolute",
-                            bottom: -(computedBlur * 0.5),
-                            left: `${20 + tEased * 5}%`,
-                            width: `${60 - tEased * 10}%`,
-                            height: Math.max(4, computedBlur * 0.55),
-                            borderRadius: "50%",
-                            background: shadowRgba,
-                            filter: `blur(${Math.max(2, computedBlur * 0.6)}px)`,
-                            zIndex: 0,
-                            pointerEvents: "none",
+                            inset: "-200px",
+                            zIndex: 2,
+                            overflow: "visible",
+                            cursor: grabbing ? "grabbing" : "grab",
+                            filter: hasShadow
+                                ? `drop-shadow(0px ${(tEased * 22).toFixed(1)}px ${(tEased * 32).toFixed(1)}px ${shadowRgba})`
+                                : "none",
+                            transition: "filter 0.15s ease",
+                            pointerEvents: "auto",
                         }}
-                    />
-                )}
-
-                <div
-                    style={{
-                        position: "absolute",
-                        inset: "-200px",
-                        zIndex: 2,
-                        overflow: "visible",
-                        cursor: grabbing ? "grabbing" : "grab",
-                        filter: hasShadow
-                            ? `drop-shadow(0px ${(tEased * 22).toFixed(1)}px ${(tEased * 32).toFixed(1)}px ${shadowRgba})`
-                            : "none",
-                        transition: "filter 0.15s ease",
-                        pointerEvents: "auto",
-                    }}
-                    onPointerDown={() => setGrabbing(true)}
-                    onPointerUp={() => setGrabbing(false)}
-                    onPointerLeave={() => setGrabbing(false)}
-                >
-                    <CanvasWithLoader
-                        imageUrl={imageUrl}
-                        imageMaskConfig={imageMaskConfig}
-                        cropArea={cropArea}
-                        initialRotationX={initialRotationX}
-                        initialRotationY={initialRotationY}
-                        initialRotationZ={initialRotationZ}
-                        onRotationChange={onRotationChange}
-                        rootRef={rootRef}
-                        cameraRef={cameraRef}
-                        zoom={zoom}
-                        onApi={onApi}
-                        onMount={onMount}
-                    />
+                        onPointerDown={() => setGrabbing(true)}
+                        onPointerUp={() => setGrabbing(false)}
+                        onPointerLeave={() => setGrabbing(false)}
+                    >
+                        <CanvasWithLoader
+                            imageUrl={imageUrl}
+                            imageMaskConfig={imageMaskConfig}
+                            cropArea={cropArea}
+                            initialRotationX={initialRotationX}
+                            initialRotationY={initialRotationY}
+                            initialRotationZ={initialRotationZ}
+                            onRotationChange={onRotationChange}
+                            rootRef={rootRef}
+                            cameraRef={cameraRef}
+                            zoom={zoom}
+                            onApi={onApi}
+                            onMount={onMount}
+                        />
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }

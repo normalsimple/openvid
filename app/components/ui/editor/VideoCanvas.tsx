@@ -1725,7 +1725,7 @@ export const VideoCanvas = forwardRef<VideoCanvasHandle, VideoCanvasProps>(funct
             <div className="flex items-stretch min-h-0 min-w-0 w-full h-full justify-center gap-0">
 
                 {/* Preview visual - contenedor con tamaño dinámico según aspect ratio */}
-                <div ref={canvasWrapperRef} className="flex-1 flex items-center justify-center min-h-0 min-w-0 mx-4">
+                <div ref={canvasWrapperRef} className="flex-1 flex items-center justify-center min-h-0 min-w-0 mr-1">
                     <div
                         ref={previewContainerRef}
                         className={`relative shrink-0 transition-all duration-300 overflow-hidden ${mediaType === "image" && imageUrl

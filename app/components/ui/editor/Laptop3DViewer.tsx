@@ -11,15 +11,22 @@ import {
   parseShadowColor,
   type ImageMaskConfigLike,
 } from "@/lib/phone3d.utils";
+import type { OrbitControls as OrbitControlsType } from 'three-stdlib';
+
+import { ControlsPopup } from "@/components/ui/ControlsPopup";
+import { EnvironmentPreset, ViewerControls3D } from "@/lib/viewer-controls3d";
 
 const LAPTOP_W = 1500;
 const LAPTOP_H = 1035;
+
 const RENDER_MULTIPLIER = 3;
 const RENDER_W = LAPTOP_W * RENDER_MULTIPLIER;
 const RENDER_H = LAPTOP_H * RENDER_MULTIPLIER;
+
 const CAM_FOV = 40;
 const CAM_RADIUS = 75;
 const screenSize: [number, number] = [29.4, 20];
+
 const LID_CLOSED_X = Math.PI * 0.5;
 const LID_OPEN_X = -0.2 * Math.PI;
 const DEG = Math.PI / 180;
@@ -82,17 +89,18 @@ function ModelScene({
   onLoaded?: () => void;
 }) {
   const { gl, scene, camera } = useThree();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const orbitRef = useRef<any>(null);
 
+  const orbitRef = useRef<OrbitControlsType | null>(null);
   const [modelGroup, setModelGroup] = useState<THREE.Group | null>(null);
   const lidGroupRef = useRef<THREE.Group | null>(null);
   const screenMatRef = useRef<THREE.MeshBasicMaterial | null>(null);
-
   const lastLoadedUrlRef = useRef<string | null>(null);
   const lastLoadedCropKeyRef = useRef<string | null>(null);
 
-  // 1. API Render Estático
+  const { autoRotate, rotationSpeed, glow, environment } = ViewerControls3D({
+    defaultEnvironment: "forest"
+  });
+
   useEffect(() => {
     const api: Laptop3DApi = {
       renderAt: (w, h) => {
@@ -100,10 +108,13 @@ function ModelScene({
         const oldAspect = cameraRef.current.aspect;
         cameraRef.current.aspect = w / h;
         cameraRef.current.updateProjectionMatrix();
+
         gl.setSize(w, h, false);
         gl.render(scene, cameraRef.current);
+
         cameraRef.current.aspect = oldAspect;
         cameraRef.current.updateProjectionMatrix();
+
         gl.setSize(RENDER_W, RENDER_H, false);
       },
     };
@@ -111,7 +122,6 @@ function ModelScene({
     return () => onApi?.(null);
   }, [onApi, gl, scene, cameraRef]);
 
-  // 2. Lógica de Texturas Asegurada
   const applyTexture = useCallback(() => {
     const mat = screenMatRef.current;
     if (!mat) return;
@@ -143,7 +153,6 @@ function ModelScene({
       const currentMat = screenMatRef.current;
       if (!currentMat) return;
 
-      // Usamos una resolución alta para evitar pixelación
       const TEX_W = RENDER_W;
       const TEX_H = RENDER_H;
 
@@ -163,7 +172,6 @@ function ModelScene({
         tex.repeat.y = ((cover.width / cover.height) / screenSize[0]) * screenSize[1];
       }
 
-      // MEJORA DE CALIDAD: Filtrado anisotrópico al máximo soportado por la GPU
       tex.generateMipmaps = true;
       tex.minFilter = THREE.LinearMipmapLinearFilter;
       tex.magFilter = THREE.LinearFilter;
@@ -194,7 +202,6 @@ function ModelScene({
     applyTexture();
   }, [applyTexture]);
 
-  // 3. Cargar GLB del Laptop y Ensamblar Materiales
   useEffect(() => {
     let isMounted = true;
 
@@ -205,7 +212,6 @@ function ModelScene({
 
     const tStart = Math.max(0, Math.min(1, openingProgress));
 
-    // MEJORA DE CALIDAD: toneMapped: false evita que los colores de la captura se vean grises/oscuros
     const screenMaterial = new THREE.MeshBasicMaterial({
       map: null,
       transparent: true,
@@ -219,7 +225,6 @@ function ModelScene({
     const textLoader = new THREE.TextureLoader();
     const keyboardMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, toneMapped: false });
     textLoader.load("/images/pages/keyboard-overlay.png", (tex) => {
-      // Filtrado nítido para el teclado también
       tex.anisotropy = gl.capabilities.getMaxAnisotropy();
       keyboardMaterial.alphaMap = tex;
       keyboardMaterial.needsUpdate = true;
@@ -228,7 +233,6 @@ function ModelScene({
     const finalizeSetup = (group: THREE.Group) => {
       if (!isMounted) return;
       setModelGroup(group);
-
       setTimeout(() => {
         if (!isMounted) return;
         applyTextureRef.current();
@@ -289,14 +293,15 @@ function ModelScene({
       console.error("Error al cargar el GLB del laptop:", err);
     });
 
-    return () => { isMounted = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // 4. Actualizar posiciones de cámara dinámicas
   useEffect(() => {
     const orbit = orbitRef.current;
     if (!orbit) return;
+
     const radius = CAM_RADIUS / zoom;
     const phi = Math.PI / 2 - initialRotationX * DEG;
     const theta = initialRotationY * DEG;
@@ -304,7 +309,6 @@ function ModelScene({
     orbit.update();
   }, [initialRotationX, initialRotationY, zoom]);
 
-  // 5. Animación de Apertura de Tapa y Rotación Base
   useEffect(() => {
     if (rootRef.current) rootRef.current.rotation.z = initialRotationZ * DEG;
   }, [initialRotationZ, modelGroup]);
@@ -313,7 +317,6 @@ function ModelScene({
     const lid = lidGroupRef.current;
     const mat = screenMatRef.current;
     if (!lid || !mat) return;
-
     const t = Math.max(0, Math.min(1, openingProgress));
     lid.rotation.x = lerp(LID_CLOSED_X, LID_OPEN_X, t);
     mat.opacity = 0.96 * t;
@@ -329,6 +332,8 @@ function ModelScene({
         enablePan={false}
         enableDamping
         dampingFactor={0.08}
+        autoRotate={autoRotate}
+        autoRotateSpeed={rotationSpeed}
         onEnd={() => {
           const orbit = orbitRef.current;
           if (!orbit || !onRotationChange) return;
@@ -338,13 +343,16 @@ function ModelScene({
         }}
       />
 
-      <Environment preset="city" background={false} />
-      <ambientLight intensity={3.2} />
+      <Environment
+        preset={environment as EnvironmentPreset}
+        environmentIntensity={glow}
+        background={false}
+      />
 
+      <ambientLight intensity={3.2} />
       <group>
         <pointLight position={[0, 5, 50]} intensity={0.8} color="#fff5e1" />
       </group>
-
       <directionalLight position={[4, 8, 7]} intensity={2.6} />
       <directionalLight position={[-5, -2, 4]} intensity={0.8} color="#aabbff" />
       <directionalLight position={[0, -6, 6]} intensity={1.3} />
@@ -356,10 +364,7 @@ function ModelScene({
   );
 }
 
-function CanvasWithLoader(props: Props & {
-  rootRef: React.MutableRefObject<THREE.Group | null>;
-  cameraRef: React.MutableRefObject<THREE.PerspectiveCamera | null>;
-}) {
+function CanvasWithLoader(props: Props & { rootRef: React.MutableRefObject<THREE.Group | null>; cameraRef: React.MutableRefObject<THREE.PerspectiveCamera | null>; }) {
   const [loaded, setLoaded] = useState(false);
   const handleLoaded = useCallback(() => setLoaded(true), []);
 
@@ -371,9 +376,8 @@ function CanvasWithLoader(props: Props & {
           antialias: true,
           alpha: true,
           preserveDrawingBuffer: true,
-          powerPreference: "high-performance" // <-- Prioriza la GPU dedicada
+          powerPreference: "high-performance"
         }}
-        // MEJORA DE CALIDAD: Recuperamos el supersampling (DPR * Multiplicador)
         dpr={Math.min((typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1) * RENDER_MULTIPLIER, 4)}
         onCreated={({ gl }) => {
           gl.setClearColor(0x000000, 0);
@@ -387,7 +391,6 @@ function CanvasWithLoader(props: Props & {
           <ModelScene {...props} onLoaded={handleLoaded} />
         </Suspense>
       </Canvas>
-
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 4 }}>
           <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
@@ -398,10 +401,7 @@ function CanvasWithLoader(props: Props & {
 }
 
 export function Laptop3DViewer(props: Props) {
-  const {
-    shadowIntensity = 0,
-    shadowColor = "#000000",
-  } = props;
+  const { shadowIntensity = 0, shadowColor = "#000000" } = props;
 
   const rootRef = useRef<THREE.Group | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -419,66 +419,68 @@ export function Laptop3DViewer(props: Props) {
   const hasShadow = t > 0.01;
 
   return (
-    <div
-      style={{
-        display: "inline-block",
-        transformOrigin: "top center",
-        width: LAPTOP_W,
-        height: LAPTOP_H + (hasShadow ? computedBlur * 0.8 : 0),
-        marginTop: "250px",
-      }}
-    >
+    <>
+      <ControlsPopup />
+
       <div
         style={{
-          position: "relative",
+          display: "inline-block",
+          transformOrigin: "top center",
           width: LAPTOP_W,
-          height: LAPTOP_H,
-          overflow: "visible",
-          willChange: "transform",
+          height: LAPTOP_H + (hasShadow ? computedBlur * 0.8 : 0),
+          marginTop: "250px",
         }}
       >
-        {/* Sombra proyectada */}
-        {hasShadow && (
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              bottom: -(computedBlur * 0.5),
-              left: `${10 + tEased * 5}%`,
-              width: `${80 - tEased * 10}%`,
-              height: Math.max(4, computedBlur * 0.55),
-              borderRadius: "50%",
-              background: shadowRgba,
-              filter: `blur(${Math.max(2, computedBlur * 0.6)}px)`,
-              zIndex: 0,
-              pointerEvents: "none",
-            }}
-          />
-        )}
-
-        {/* Canvas WebGL Container */}
         <div
           style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
+            position: "relative",
             width: LAPTOP_W,
             height: LAPTOP_H,
             overflow: "visible",
-            zIndex: 2,
-            cursor: grabbing ? "grabbing" : "grab",
-            filter: hasShadow
-              ? `drop-shadow(0px ${(tEased * 22).toFixed(1)}px ${(tEased * 32).toFixed(1)}px ${shadowRgba})`
-              : "none",
-            transition: "filter 0.15s ease",
+            willChange: "transform",
           }}
-          onPointerDown={() => setGrabbing(true)}
-          onPointerUp={() => setGrabbing(false)}
-          onPointerLeave={() => setGrabbing(false)}
         >
-          <CanvasWithLoader {...props} rootRef={rootRef} cameraRef={cameraRef} />
+          {hasShadow && (
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                bottom: -(computedBlur * 0.5),
+                left: `${10 + tEased * 5}%`,
+                width: `${80 - tEased * 10}%`,
+                height: Math.max(4, computedBlur * 0.55),
+                borderRadius: "50%",
+                background: shadowRgba,
+                filter: `blur(${Math.max(2, computedBlur * 0.6)}px)`,
+                zIndex: 0,
+                pointerEvents: "none",
+              }}
+            />
+          )}
+
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              width: LAPTOP_W,
+              height: LAPTOP_H,
+              overflow: "visible",
+              zIndex: 2,
+              cursor: grabbing ? "grabbing" : "grab",
+              filter: hasShadow
+                ? `drop-shadow(0px ${(tEased * 22).toFixed(1)}px ${(tEased * 32).toFixed(1)}px ${shadowRgba})`
+                : "none",
+              transition: "filter 0.15s ease",
+            }}
+            onPointerDown={() => setGrabbing(true)}
+            onPointerUp={() => setGrabbing(false)}
+            onPointerLeave={() => setGrabbing(false)}
+          >
+            <CanvasWithLoader {...props} rootRef={rootRef} cameraRef={cameraRef} />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

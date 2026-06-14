@@ -173,8 +173,10 @@ export function Mockup3dMenu({
     setImagePhoneX(0);
     setImagePhoneY(0);
     setImagePhoneScale(0.8);
-    setImagePhoneRotX(0);
-    setImagePhoneRotY(0);
+    const defaultRotX = imagePhoneDevice === "laptop" ? 43.23 : -58.23;
+    const defaultRotY = imagePhoneDevice === "laptop" ? -37.82 : -29.82;
+    setImagePhoneRotX(defaultRotX);
+    setImagePhoneRotY(defaultRotY);
     if (imagePhoneDevice === "laptop") {
       setImagePhoneOpening(1);
       setImagePhoneShadow(0.7);

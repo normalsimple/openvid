@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { AspectRatioSelect } from "@/app/components/ui/AspectRatioSelect";
 import { TooltipAction } from "@/components/ui/tooltip-action";
 import { ImageMaskEditor } from "./ImageMaskEditor";
-import { NRX, NRY } from "@/lib/animation-core";
 import {
     Popover,
     PopoverTrigger,
@@ -16,8 +15,15 @@ import {
     PopoverHeader,
     PopoverTitle,
 } from "@/components/ui/popover";
-import { PhotoEditorPlaceholderProps, Preview3DConfig, PREVIEW_CONFIGS, PREVIEW_TO_PHONE_OFFSET } from "@/types/photo.types";
+import { PhotoEditorPlaceholderProps, Preview3DConfig, PREVIEW_CONFIGS, THREEJS_PHONE_ROTATIONS, THREEJS_LAPTOP_ROTATIONS, CSS_PHONE_PREVIEW_ROTATIONS, CSS_LAPTOP_PREVIEW_ROTATIONS } from "@/types/photo.types";
 import { useMockup3dContext } from "@/app/contexts/Mockup3dContext";
+
+const DEFAULT_PHONE_ROTATION = { rx: -58.23, ry: -29.82 };
+const DEFAULT_LAPTOP_ROTATION = { rx: 43.23, ry: -37.82 };
+
+function getDefaultRotation(device: string) {
+    return device === "laptop" ? DEFAULT_LAPTOP_ROTATION : DEFAULT_PHONE_ROTATION;
+}
 
 export function PhotoEditorPlaceholder({
     className = "",
@@ -125,10 +131,13 @@ export function PhotoEditorPlaceholder({
                     onSelectPreview?.(config);
                     if (isCustom) setIsCustomPopoverOpen(true);
                     if (imagePhoneActive) {
-                        const offset = PREVIEW_TO_PHONE_OFFSET[config.id];
-                        if (offset) {
-                            setImagePhoneRotX(offset.rx);
-                            setImagePhoneRotY(offset.ry);
+                        const threejsMap = imagePhoneDevice === "laptop"
+                            ? THREEJS_LAPTOP_ROTATIONS
+                            : THREEJS_PHONE_ROTATIONS;
+                        const rotation = threejsMap[config.id];
+                        if (rotation) {
+                            setImagePhoneRotX(rotation.rx);
+                            setImagePhoneRotY(rotation.ry);
                             setImagePhonePresetId(config.id);
                         }
                     }
@@ -178,13 +187,15 @@ export function PhotoEditorPlaceholder({
                                     {imagePhoneActive ? (
                                     imagePhoneDevice === "laptop" ? (
                                         // ── Laptop thumbnail ──
-                                        // Uses config.rotateX/Y directly (same Euler convention as Laptop3DViewer)
                                         <div style={{
                                             perspective: `${Math.round((config.perspective || 600) * 0.5)}px`,
                                             perspectiveOrigin: 'center center',
                                         }}>
+                                            {(() => {
+                                                const cssRot = CSS_LAPTOP_PREVIEW_ROTATIONS[config.id] ?? CSS_LAPTOP_PREVIEW_ROTATIONS["front"]!;
+                                                return (
                                             <div style={{
-                                                transform: `rotateX(${config.rotateX}deg) rotateY(${config.rotateY}deg)`,
+                                                transform: `rotateX(${cssRot.rx}deg) rotateY(${cssRot.ry}deg)`,
                                                 transformStyle: 'preserve-3d',
                                                 transition: 'transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                                                 width: 88,
@@ -192,7 +203,6 @@ export function PhotoEditorPlaceholder({
                                                 position: 'relative',
                                                 filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.7))',
                                             }}>
-                                                {/* Pantalla / Lid */}
                                                 <div style={{
                                                     position: 'absolute',
                                                     top: 0,
@@ -214,7 +224,6 @@ export function PhotoEditorPlaceholder({
                                                             : { background: 'rgba(0,163,255,0.10)' }
                                                         ),
                                                     }} />
-                                                    {/* Camara */}
                                                     <div style={{
                                                         position: 'absolute', top: 1, left: '50%',
                                                         transform: 'translateX(-50%)',
@@ -222,7 +231,6 @@ export function PhotoEditorPlaceholder({
                                                         background: 'rgba(255,255,255,0.15)',
                                                     }} />
                                                 </div>
-                                                {/* Base / Keyboard */}
                                                 <div style={{
                                                     position: 'absolute',
                                                     bottom: 0,
@@ -233,14 +241,12 @@ export function PhotoEditorPlaceholder({
                                                     background: 'linear-gradient(180deg, #cecfd3 0%, #b4b5bb 100%)',
                                                     border: '1px solid rgba(200,200,200,0.3)',
                                                 }}>
-                                                    {/* Keyboard texture lines */}
                                                     <div style={{
                                                         position: 'absolute',
                                                         top: '30%', left: '8%', right: '8%', height: '40%',
                                                         background: 'repeating-linear-gradient(90deg, rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.12) 1px, transparent 1px, transparent 5px)',
                                                         borderRadius: '1px',
                                                     }} />
-                                                    {/* Trackpad */}
                                                     <div style={{
                                                         position: 'absolute',
                                                         bottom: '12%', left: '35%', right: '35%', height: '28%',
@@ -250,13 +256,14 @@ export function PhotoEditorPlaceholder({
                                                     }} />
                                                 </div>
                                             </div>
+                                        );
+                                            })()}
                                         </div>
                                     ) : (
                                     (() => {
-                                        // Usar el offset de Three.js para que la thumbnail coincida con el canvas
-                                        const phoneOffset = PREVIEW_TO_PHONE_OFFSET[config.id];
-                                        const previewRx = (phoneOffset?.rx ?? 0) + NRX;  // total = NRX + userOffset
-                                        const previewRy = (phoneOffset?.ry ?? 0) + NRY;  // CSS y Three.js comparten convención (+Y = left forward)
+                                        const cssRot = CSS_PHONE_PREVIEW_ROTATIONS[config.id] ?? CSS_PHONE_PREVIEW_ROTATIONS["front"]!;
+                                        const previewRx = cssRot.rx;
+                                        const previewRy = cssRot.ry;
                                         return (
                                             <div style={{
                                                 perspective: `${Math.round((config.perspective || 600) * 0.55)}px`,
@@ -274,7 +281,6 @@ export function PhotoEditorPlaceholder({
                                                     boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
                                                     position: 'relative',
                                                 }}>
-                                                    {/* Pantalla */}
                                                     <div style={{
                                                         position: 'absolute', top: 5, left: 4, right: 4, bottom: 5,
                                                         borderRadius: '5px',
@@ -285,13 +291,11 @@ export function PhotoEditorPlaceholder({
                                                             : { background: 'rgba(0,163,255,0.10)' }
                                                         ),
                                                     }} />
-                                                    {/* Bocina */}
                                                     <div style={{
                                                         position: 'absolute', top: 2, left: '50%',
                                                         transform: 'translateX(-50%)',
                                                         width: 12, height: 1.5, borderRadius: '1px', background: '#000'
                                                     }} />
-                                                    {/* Detalle inferior */}
                                                     <div style={{
                                                         position: 'absolute', bottom: 2, left: '50%',
                                                         transform: 'translateX(-50%)',
@@ -475,8 +479,9 @@ export function PhotoEditorPlaceholder({
                                 setCustomConfig(resetConfig);
                                 if (selectedPreviewId === "custom") onSelectPreview?.(resetConfig);
                                 if (imagePhoneActive) {
-                                    setImagePhoneRotX(0);
-                                    setImagePhoneRotY(0);
+                                    const defaults = getDefaultRotation(imagePhoneDevice);
+                                    setImagePhoneRotX(defaults.rx);
+                                    setImagePhoneRotY(defaults.ry);
                                     setImagePhoneRotZ(0);
                                     setImagePhonePerspective(600);
                                     setImagePhoneScale(0.9);
@@ -550,8 +555,9 @@ export function PhotoEditorPlaceholder({
                                 };
                                 setCustomConfig(defaultCustom);
                                 if (imagePhoneActive) {
-                                    setImagePhoneRotX(0);
-                                    setImagePhoneRotY(0);
+                                    const defaults = getDefaultRotation(imagePhoneDevice);
+                                    setImagePhoneRotX(defaults.rx);
+                                    setImagePhoneRotY(defaults.ry);
                                     setImagePhoneRotZ(0);
                                     setImagePhonePerspective(600);
                                     setImagePhoneScale(0.9);

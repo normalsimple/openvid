@@ -96,40 +96,40 @@ export type MenuPage = "home" | "detail-2d" | "detail-3d";
 // ─── 3D Device definitions ────────────────────────────────────────────────────
 
 export const IMAGE_DEVICE_TEMPLATES = [
-  {
-    id: "iphone-13-pro-max",
-    title: "iPhone 13 Pro",
-    accentColor: "#7C7C85",
-    icon: "simple-icons:apple",
-    modelUrl: "/models/apple_iphone_13_pro_max.glb",
-  },
-  {
-    id: "phone",
-    title: "Phone",
-    accentColor: "#00A3FF",
-    icon: "ph:device-mobile-bold",
-    modelUrl: "/models/phone-gltf.glb",
-  },
-  {
-    id: "iphone",
-    title: "iPhone 15 Pro",
-    accentColor: "#A8A8B0",
-    icon: "simple-icons:apple",
-    modelUrl: "/models/iphone-15-pro-max.glb",
-  },
-  {
-    id: "samsung",
-    title: "Samsung S25",
-    accentColor: "#1428A0",
-    icon: "simple-icons:samsung",
-    modelUrl: "/models/samsung-galaxy-s25-ultra.glb",
-  },
-  {
-    id: "laptop",
-    title: "macOS Laptop",
-    accentColor: "#CECFD3",
-    icon: "ph:laptop-bold",
-    modelUrl: "/models/mac-book.glb",
-  },
+    {
+        id: "iphone-13-pro-max",
+        title: "iPhone 13 Pro",
+        accentColor: "#7C7C85",
+        icon: "simple-icons:apple",
+        modelUrl: "/models/apple_iphone_13_pro_max.glb",
+    },
+    {
+        id: "iphone",
+        title: "iPhone 15 Pro",
+        accentColor: "#A8A8B0",
+        icon: "simple-icons:apple",
+        modelUrl: "/models/iphone-15-pro-max.glb",
+    },
+    {
+        id: "samsung",
+        title: "Samsung S25",
+        accentColor: "#1428A0",
+        icon: "simple-icons:samsung",
+        modelUrl: "/models/samsung-galaxy-s25-ultra.glb",
+    },
+    {
+        id: "phone",
+        title: "Phone",
+        accentColor: "#00A3FF",
+        icon: "ph:device-mobile-bold",
+        modelUrl: "/models/phone-gltf.glb",
+    },
+    {
+        id: "laptop",
+        title: "macOS Laptop",
+        accentColor: "#CECFD3",
+        icon: "ph:laptop-bold",
+        modelUrl: "/models/mac-book.glb",
+    },
 ] as const;
 
