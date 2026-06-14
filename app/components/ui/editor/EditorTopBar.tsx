@@ -183,7 +183,7 @@ export function EditorTopBar({
                 ) : !user ? (
                     <div className="pl-3 border-l border-white/10 ml-1 flex items-center h-8">
                         <Link href="/login" className="text-sm font-medium text-white/80 hover:text-white transition-colors">
-                            {t("auth.signIn")}
+                            {t("auth.access")}
                         </Link>
                     </div>
                 ) : (

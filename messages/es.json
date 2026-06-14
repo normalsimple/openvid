@@ -759,7 +759,8 @@
         "home": "Inicio",
         "editor": "Editor",
         "signOut": "Cerrar sesión",
-        "signingOut": "Cerrando sesión..."
+        "signingOut": "Cerrando sesión...",
+        "access": "Acceder"
       }
     },
     "export": {

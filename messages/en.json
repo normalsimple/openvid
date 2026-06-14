@@ -803,7 +803,8 @@
         "home": "Home",
         "editor": "Editor",
         "signOut": "Sign Out",
-        "signingOut": "Signing out..."
+        "signingOut": "Signing out...",
+        "access": "Access"
       }
     },
     "export": {

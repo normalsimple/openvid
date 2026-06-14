@@ -771,7 +771,8 @@
         "home": "Главная",
         "editor": "Редактор",
         "signOut": "Выйти",
-        "signingOut": "Выход..."
+        "signingOut": "Выход...",
+        "access": "Войти"
       }
     },
     "export": {
