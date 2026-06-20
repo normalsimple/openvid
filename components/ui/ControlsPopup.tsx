@@ -23,7 +23,7 @@ export function ControlsPopup() {
                 bottom: "240px",
                 right: "325px",
                 width: "320px",
-                zIndex: 99999,
+                zIndex: 10,
             }}
             onPointerDown={(e) => e.stopPropagation()}
         >

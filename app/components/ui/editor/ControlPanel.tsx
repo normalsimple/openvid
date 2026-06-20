@@ -293,6 +293,7 @@ export function ControlPanel({
                             selectedWallpaper={selectedWallpaper}
                             selectedImageUrl={selectedImageUrl}
                             initialPage={initialMockupMenuPage}
+                            mediaType={mediaType}
                         />
                     </Suspense>
                 )}

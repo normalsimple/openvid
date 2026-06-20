@@ -99,9 +99,9 @@ export default function InteractiveRecordingSteps() {
         </div>
       ),
       visual: (
-        <div className="aspect-video bg-[#0A0A0A]rounded-xl flex items-center justify-center relative group shadow-2xl p-1 sm:p-0">
+        <div className="aspect-video bg-[#0A0A0A]squircle-element-camera flex items-center justify-center relative group shadow-2xl p-1 sm:p-0">
           <div className="absolute inset-0 bg-[radial-linear(#ffffff22_1px,transparent_1px)] [bg-size:16px_16px] opacity-10"></div>
-          <div className="bg-[#292A2D] rounded-xl w-full max-w-full shadow-2xl relative z-10 flex flex-col font-sans border border-white/5 origin-center">
+          <div className="bg-[#292A2D] squircle-element-camera w-full max-w-full shadow-2xl relative z-10 flex flex-col font-sans border border-white/5 origin-center">
             <div className="flex justify-between px-2 sm:px-4 pt-2 sm:pt-3 border-b border-white/10 text-[9px] sm:text-[11px] font-medium">
               <div className="pb-2 text-neutral-400 hover:text-neutral-200 flex-1 text-center transition-colors truncate px-1">
                 {t('step1.visual.browserTab')}
@@ -175,7 +175,7 @@ export default function InteractiveRecordingSteps() {
       isReversed: false,
       actionButton: null,
       visual: (
-        <div className="aspect-video bg-[#0A0A0A] border border-white/10 rounded-xl overflow-hidden flex items-center justify-center relative group shadow-2xl p-4">
+        <div className="aspect-video bg-[#0A0A0A] border border-white/10 squircle-element-camera overflow-hidden flex items-center justify-center relative group shadow-2xl p-4">
           <div className="absolute inset-0 bg-[radial-linear(#ffffff22_1px,transparent_1px)] [bg-size:16px_16px] opacity-10"></div>
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-75 h-37.5 bg-blue-500/5 rounded-[100%] blur-3xl"></div>
           <div className="bg-[#1C1A20] border border-white/5 rounded-2xl sm:rounded-full px-4 sm:pl-4 sm:pr-6 py-3 sm:py-2 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 shadow-2xl z-10 w-full sm:w-auto max-w-[90%] sm:max-w-none text-center sm:text-left">
@@ -211,7 +211,7 @@ export default function InteractiveRecordingSteps() {
       isReversed: true,
       actionButton: null,
       visual: (
-        <div className="aspect-video bg-[#000B13] border border-white/10 rounded-xl overflow-hidden relative group shadow-2xl">
+        <div className="aspect-video bg-[#000B13] border border-white/10 squircle-element-camera overflow-hidden relative group shadow-2xl">
           <div className="absolute inset-0 bg-[#000B13]/95 backdrop-blur-md flex items-center justify-center z-10 p-4 sm:p-6">
             <div className="flex flex-col items-center justify-center h-full w-full max-h-full">
               <div className="relative w-20 h-20 sm:w-32 sm:h-32 flex items-center justify-center shrink-0">
@@ -266,7 +266,7 @@ export default function InteractiveRecordingSteps() {
         </Button>
       ),
       visual: (
-        <div className="aspect-video bg-[#0A0A0A] border border-white/10 rounded-xl overflow-hidden relative group shadow-2xl flex items-center justify-center">
+        <div className="aspect-video bg-[#0A0A0A] border border-white/10 squircle-element-camera overflow-hidden relative group shadow-2xl flex items-center justify-center">
           <div className="absolute top-1/2 left-0 w-full h-px bg-white/5"></div>
           <div className="absolute top-0 left-1/2 w-px h-full bg-white/5"></div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto w-full px-4 sm:px-0 sm:w-auto">
@@ -305,7 +305,7 @@ export default function InteractiveRecordingSteps() {
             {t('title2')}
           </span>
         </h2>
-        <p className="text-lg text-neutral-400 font-light leading-relaxed max-w-xl">
+        <p className="text-xl text-neutral-400 font-light leading-relaxed max-w-xl">
           {t('subtitle')}
         </p>
       </div>
